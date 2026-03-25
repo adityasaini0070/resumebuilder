@@ -20,7 +20,14 @@ public class EmailService {
     @Value("${resend.api.url}")
     private String apiUrl;
 
+    @Value("${resend.enabled}")
+    private boolean resendEnabled;
+
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        if (!resendEnabled) {
+            log.info("Email sending is disabled. Skipping API call for to: {}, subject: {}, content: {}", to, subject, htmlContent);
+            return;
+        }
         try {
             HttpResponse<JsonNode> request = Unirest.post(apiUrl)
                     .header("Authorization", "Bearer " + apiKey)
