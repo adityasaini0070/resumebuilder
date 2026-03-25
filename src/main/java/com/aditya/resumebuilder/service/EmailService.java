@@ -11,37 +11,36 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class EmailService {
-    @Value("${spring.mail.from}")
+    @Value("${resend.mail.from}")
     private String fromEmail;
 
-    @Value("${spring.mail.apikey}")
+    @Value("${resend.api.key}")
     private String apiKey;
 
-    @Value("${spring.mail.sandboxdomain}")
-    private String sandboxDomain;
-
-    @Value("${spring.mail.baseurl}")
-    private String baseUrl;
+    @Value("${resend.api.url}")
+    private String apiUrl;
 
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         try {
-            HttpResponse<JsonNode> request = Unirest.post(baseUrl + "/v3/" + sandboxDomain + "/messages")
-                    .basicAuth("api", apiKey)
-                    .field("from", fromEmail)
-                    .field("to", to)
-                    .field("subject", subject)
-                    .field("html", htmlContent)
+            HttpResponse<JsonNode> request = Unirest.post(apiUrl)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .body(new org.json.JSONObject()
+                            .put("from", fromEmail)
+                            .put("to", to)
+                            .put("subject", subject)
+                            .put("html", htmlContent))
                     .asJson();
 
-            if (request.getStatus() == 200) {
-                log.info("Email sent successfully to {}", to);
+            if (request.getStatus() == 200 || request.getStatus() == 201) {
+                log.info("Email sent successfully via Resend to {}", to);
             } else {
-                log.error("Failed to send email. Status: {}, Body: {}", request.getStatus(), request.getBody());
-                throw new RuntimeException("Failed to send email via Mailgun: " + request.getStatusText());
+                log.error("Failed to send email via Resend. Status: {}, Body: {}", request.getStatus(), request.getBody());
+                throw new RuntimeException("Failed to send email via Resend: " + request.getStatusText());
             }
         } catch (UnirestException e) {
-            log.error("Error while sending email via Mailgun", e);
-            throw new RuntimeException("Error while sending email via Mailgun", e);
+            log.error("Error while sending email via Resend", e);
+            throw new RuntimeException("Error while sending email via Resend", e);
         }
     }
 }
