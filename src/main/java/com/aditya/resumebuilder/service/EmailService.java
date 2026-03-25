@@ -1,30 +1,47 @@
 package com.aditya.resumebuilder.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.JsonNode;
+import com.mashape.unirest.http.Unirest;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
-    @Value("${spring.mail.properties.mail.smtp.from}")
+    @Value("${spring.mail.from}")
     private String fromEmail;
 
-    private final JavaMailSender mailSender;
+    @Value("${spring.mail.apikey}")
+    private String apiKey;
 
-    public void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        helper.setFrom(fromEmail);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
-        mailSender.send(message);
+    @Value("${spring.mail.sandboxdomain}")
+    private String sandboxDomain;
+
+    @Value("${spring.mail.baseurl}")
+    private String baseUrl;
+
+    public void sendHtmlEmail(String to, String subject, String htmlContent) {
+        try {
+            HttpResponse<JsonNode> request = Unirest.post(baseUrl + "/v3/" + sandboxDomain + "/messages")
+                    .basicAuth("api", apiKey)
+                    .field("from", fromEmail)
+                    .field("to", to)
+                    .field("subject", subject)
+                    .field("html", htmlContent)
+                    .asJson();
+
+            if (request.getStatus() == 200) {
+                log.info("Email sent successfully to {}", to);
+            } else {
+                log.error("Failed to send email. Status: {}, Body: {}", request.getStatus(), request.getBody());
+                throw new RuntimeException("Failed to send email via Mailgun: " + request.getStatusText());
+            }
+        } catch (UnirestException e) {
+            log.error("Error while sending email via Mailgun", e);
+            throw new RuntimeException("Error while sending email via Mailgun", e);
+        }
     }
 }
