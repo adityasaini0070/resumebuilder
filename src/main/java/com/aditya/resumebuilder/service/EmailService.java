@@ -23,18 +23,28 @@ public class EmailService {
     @Value("${resend.enabled}")
     private boolean resendEnabled;
 
+    @Value("${resend.test.email:}")
+    private String testEmail;
+
     public void sendHtmlEmail(String to, String subject, String htmlContent) {
         if (!resendEnabled) {
             log.info("Email sending is disabled. Skipping API call for to: {}, subject: {}, content: {}", to, subject, htmlContent);
             return;
         }
+
+        String recipient = to;
+        if (testEmail != null && !testEmail.isBlank()) {
+            log.info("Test email override enabled. Redirecting email from {} to {}", to, testEmail);
+            recipient = testEmail;
+        }
+
         try {
             HttpResponse<JsonNode> request = Unirest.post(apiUrl)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .body(new org.json.JSONObject()
                             .put("from", fromEmail)
-                            .put("to", to)
+                            .put("to", recipient)
                             .put("subject", subject)
                             .put("html", htmlContent))
                     .asJson();
