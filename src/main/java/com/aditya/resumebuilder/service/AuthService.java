@@ -41,7 +41,7 @@ public class AuthService {
         User user = userRepository.findByVerificationToken(token)
                 .orElseThrow(() -> new RuntimeException("Invalid verification token"));
 
-        if (user.getVerificationExpires().isBefore(LocalDateTime.now())) {
+        if (user.getVerificationExpires()!=null && user.getVerificationExpires().isBefore(LocalDateTime.now())) {
             throw new RuntimeException("Verification token has expired");
         }
 
