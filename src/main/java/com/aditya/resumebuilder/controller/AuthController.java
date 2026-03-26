@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @Slf4j
@@ -31,6 +33,6 @@ public class AuthController {
     @GetMapping("/verifyemail")
     public ResponseEntity<?> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "email verified successfully"));
     }
 }
