@@ -1,6 +1,7 @@
 package com.aditya.resumebuilder.controller;
 
 import com.aditya.resumebuilder.dto.AuthResponse;
+import com.aditya.resumebuilder.dto.LoginRequest;
 import com.aditya.resumebuilder.dto.RegisterRequest;
 import com.aditya.resumebuilder.service.AuthService;
 import com.aditya.resumebuilder.service.FileUploadService;
@@ -45,5 +46,13 @@ public class AuthController {
         log.info("Inside AuthController - uploadImage(): {}", file);
         Map<String, String> response = fileUploadService.uploadSingleImage(file);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(LOGIN)
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request){
+        log.info("Inside AuthController - login(): {}", request);
+        AuthResponse response = authService.login(request);
+        log.info("response from login: {}", response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
