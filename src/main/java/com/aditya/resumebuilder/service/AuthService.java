@@ -6,6 +6,7 @@ import com.aditya.resumebuilder.dto.LoginRequest;
 import com.aditya.resumebuilder.dto.RegisterRequest;
 import com.aditya.resumebuilder.exception.ResourceExistsException;
 import com.aditya.resumebuilder.repository.UserRepository;
+import com.aditya.resumebuilder.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Value("${app.base.url:http://localhost:8083}")
     private String appBaseUrl;
@@ -110,7 +112,7 @@ public class AuthService {
             throw new BadCredentialsException("invalid password");
         }
         if(!existingUser.getEmailVerified()) throw new RuntimeException("please verify your email before logging in");
-        String token = "jwtToken";
+        String token = jwtUtil.generateToken(existingUser.getId());
         AuthResponse response = toResponse(existingUser);
         response.setToken(token);
         return response;
